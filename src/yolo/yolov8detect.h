@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "IYoloDetectBase.h"
 #include "boundingbox.h"
 #include <torch/torch.h>
 #include <opencv2/opencv.hpp>
@@ -11,24 +12,14 @@
 
 namespace sleepingwithshoes::yolo {
 
-    class YoloV8detect {
+    class YoloV8detect final : public IYoloDetectBase {
     public:
-        YoloV8detect(const std::string& modelPath, const std::string& classesPath,const std::pair<int, int>& inputSize, torch::Device device);
-        ~YoloV8detect() = default;
+        YoloV8detect(const std::string& modelPath, const std::string& classesPath,const std::pair<int, int>& inputSize, torch::Device device, float iou_thresh = 0.4);
 
-        std::vector<BoundingBox> detect(const cv::Mat& image, float score_thresh = 0.5, float iou_thresh = 0.4);
-
+        std::vector<BoundingBox> detect(const cv::Mat& image, float score_thresh) override;
     private:
-        void _loadModel(const std::filesystem::path& modelAbsPath);
-        void _loadClasses(const std::filesystem::path& classesAbsPath);
-        void _generateColors(int classCounts);
         std::vector<torch::Tensor> _nonMaxSupression(const torch::Tensor& preds, float score_thresh, float iou_thresh, torch::Device device);
-
-        torch::Device _device;
-        std::pair<int, int> _inputSize;
-        torch::jit::script::Module _model;
-        std::vector<std::string> _classnames = {};
-        std::vector<cv::Scalar> _colors = {};
+        float _iou_thresh;
     };
 }
 
